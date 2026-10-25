@@ -35,7 +35,6 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       });
 
       if (res.ok) {
-        // Sem alerta! Limpa os dados silenciosamente e volta para o Dashboard
         setFormulario({ titulo: "", descricao: "", data: "", horario: "", local: "", imagem: "" });
         router.push("/"); 
         router.refresh(); 
@@ -58,7 +57,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
           <label className="block text-gray-700 font-medium mb-1">Título</label>
           <input 
             type="text" name="titulo" 
-            value={formulario.titulo} /* CORREÇÃO: Adicionado value */
+            value={formulario.titulo}
             required onChange={handleChange} 
             className="w-full border border-gray-300 rounded p-2 text-black" 
             placeholder="Ex: Minicurso de Linux"
@@ -69,7 +68,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
           <label className="block text-gray-700 font-medium mb-1">Descrição</label>
           <textarea 
             name="descricao" 
-            value={formulario.descricao} /* CORREÇÃO: Adicionado value */
+            value={formulario.descricao}
             required onChange={handleChange} rows={3}
             className="w-full border border-gray-300 rounded p-2 text-black" 
             placeholder="Detalhes sobre o evento..."

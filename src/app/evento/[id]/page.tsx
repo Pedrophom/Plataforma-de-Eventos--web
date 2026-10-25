@@ -4,6 +4,15 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 
+interface Inscricao {
+  id: string;
+  usuario: {
+    id: string;
+    nome: string;
+    email: string;
+  };
+}
+
 interface Evento {
   id: string;
   titulo: string;
@@ -12,6 +21,7 @@ interface Evento {
   horario: string;
   local: string;
   imagem: string | null;
+  inscricoes?: Inscricao[];
 }
 
 function DetalhesEventoConteudo() {
@@ -22,6 +32,7 @@ function DetalhesEventoConteudo() {
   const [evento, setEvento] = useState<Evento | null>(null);
   const [editando, setEditando] = useState(false);
   const [carregando, setCarregando] = useState(true);
+  const [mostrarInscritos, setMostrarInscritos] = useState(false);
 
   const [formulario, setFormulario] = useState({
     titulo: "", descricao: "", data: "", horario: "", local: "", imagem: "",
@@ -73,6 +84,24 @@ function DetalhesEventoConteudo() {
     }
   };
 
+  const removerInscricao = async (inscricaoId: string, nomeUsuario: string) => {
+    const confirmar = window.confirm(`Remover a inscrição de ${nomeUsuario} neste evento?`);
+    if (!confirmar) return;
+
+    try {
+      const res = await fetch(`/api/registrations/${inscricaoId}`, { method: "DELETE" });
+      if (res.ok) {
+        setEvento((prev) => 
+          prev ? { ...prev, inscricoes: prev.inscricoes?.filter(i => i.id !== inscricaoId) } : prev
+        );
+      } else {
+        alert("Erro ao remover inscrição.");
+      }
+    } catch (error) {
+      console.error("Erro:", error);
+    }
+  };
+
   if (carregando) return <p className="text-center mt-12 text-black font-medium">A carregar detalhes do evento...</p>;
   if (!evento) return <p className="text-center mt-12 text-black font-medium">Evento não encontrado.</p>;
 
@@ -82,7 +111,6 @@ function DetalhesEventoConteudo() {
         <h1 className="text-2xl font-bold text-black tracking-tight">
           {editando ? "Editar Evento" : "Detalhes do Evento"}
         </h1>
-        {/* Link alterado para preto */}
         <Link href="/" className="text-sm font-bold text-black hover:underline transition-colors">
           Voltar ao Dashboard
         </Link>
@@ -127,13 +155,68 @@ function DetalhesEventoConteudo() {
             </div>
           )}
           
-          {/* Botão alterado para verde IFMA */}
-          <button 
-            onClick={() => setEditando(true)}
-            className="w-full bg-[#00823b] hover:bg-[#006a30] text-white font-bold py-3.5 rounded-lg transition-colors mt-4"
-          >
-            Editar Evento
-          </button>
+          {/* GRUPO DE BOTÕES AQUI */}
+          <div className="mt-6 flex flex-col gap-3">
+            <button 
+              onClick={() => setEditando(true)}
+              className="w-full bg-[#00823b] hover:bg-[#006a30] text-white font-bold py-3.5 rounded-lg transition-colors"
+            >
+              Editar Evento
+            </button>
+
+            <button 
+              onClick={() => setMostrarInscritos(!mostrarInscritos)}
+              className="w-full bg-white border-2 border-[#00823b] text-[#00823b] font-bold py-3.5 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              {mostrarInscritos ? "Ocultar Inscritos" : "Visualizar Inscritos"}
+            </button>
+          </div>
+
+          {/* TABELA CONDICIONAL */}
+          {mostrarInscritos && (
+            <div className="mt-8 border-t border-gray-200 pt-6 animate-fade-in">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-black">
+                  Participantes Inscritos ({evento?.inscricoes?.length || 0})
+                </h2>
+              </div>
+
+              {!evento?.inscricoes || evento.inscricoes.length === 0 ? (
+                <div className="bg-gray-50 p-4 rounded border border-gray-200 text-center">
+                  <p className="text-gray-500 text-sm">Nenhum utilizador inscrito neste evento ainda.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="py-2 px-3 text-xs font-bold text-black border-b border-gray-200 uppercase">Nome</th>
+                        <th className="py-2 px-3 text-xs font-bold text-black border-b border-gray-200 uppercase">E-mail</th>
+                        <th className="py-2 px-3 text-xs font-bold text-black text-right border-b border-gray-200 uppercase">Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {evento.inscricoes.map((inscricao) => (
+                        <tr key={inscricao.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-3 px-3 text-sm text-black font-semibold">{inscricao.usuario.nome}</td>
+                          <td className="py-3 px-3 text-sm text-gray-600">{inscricao.usuario.email}</td>
+                          <td className="py-3 px-3 text-right">
+                            <button 
+                              onClick={() => removerInscricao(inscricao.id, inscricao.usuario.nome)}
+                              className="text-red-600 font-bold hover:text-red-800 text-xs bg-red-50 px-2 py-1 rounded"
+                            >
+                              Excluir
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
       ) : (
         <form onSubmit={handleUpdate} className="space-y-6">

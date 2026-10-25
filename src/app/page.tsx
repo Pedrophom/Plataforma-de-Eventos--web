@@ -46,7 +46,6 @@ export default function Home() {
     <div>
       <div className="mb-8 pb-5 border-b border-gray-300 flex justify-between items-end">
         <div className="flex items-center gap-3">
-          {/* Barrinha verde lateral para dar um charme corporativo */}
           <div className="w-1.5 h-10 bg-[#00823b] rounded-full"></div>
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight">
@@ -91,7 +90,6 @@ export default function Home() {
                   </p>
                 </div>
 
-                {/* Miniatura da Imagem */}
                 <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 bg-gray-50 rounded-lg border border-gray-100 overflow-hidden shadow-inner">
                   {evento.imagem ? (
                     <img 
@@ -107,13 +105,12 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Rodapé do Cartão com Ações */}
               <div className="bg-gray-50 px-6 py-3.5 flex justify-between items-center border-t border-gray-100">
                 <Link 
                   href={`/evento/${evento.id}`} 
                   className="text-[#00823b] hover:text-[#006a30] font-semibold text-sm transition-colors"
                 >
-                  Ver detalhes →
+                  Ver detalhes
                 </Link>
                 <button 
                   onClick={() => deletarEvento(evento.id)}

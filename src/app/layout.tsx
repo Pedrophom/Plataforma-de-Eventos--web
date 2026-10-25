@@ -17,25 +17,15 @@ export default function RootLayout({
       <body className="min-h-screen flex flex-col bg-gray-100 text-black">
         
         {/* Cabeçalho Verde IFMA */}
-        <header className="bg-[#00823b] text-white shadow-md">
-          <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <Link href="/" className="text-xl font-bold">
-              Painel de Eventos
-            </Link>
-            
-            <nav className="flex items-center gap-6">
-              <Link href="/" className="hover:text-gray-200 font-medium">
-                Dashboard
-              </Link>
-              <Link 
-                href="/novo" 
-                className="bg-white text-[#00823b] hover:bg-gray-100 font-bold px-4 py-2 rounded-md transition-colors"
-              >
-                + Novo Evento
-              </Link>
-            </nav>
-          </div>
-        </header>
+        <header className="bg-[#00823b] text-white px-6 py-4 flex items-center justify-between shadow-md">
+          <Link href="/" className="text-xl font-bold border border-white px-2 py-1"> Painel de Eventos </Link>
+  
+        <div className="flex items-center gap-6">
+        <Link href="/usuarios" className="text-sm font-medium hover:underline"> Usuários </Link>
+    
+        <Link href="/novo" className="bg-white text-[#00823b] font-bold px-4 py-2 rounded hover:bg-gray-100 transition-colors text-sm"> + Novo Evento </Link>
+  </div>
+</header>
 
         <main className="flex-grow max-w-6xl w-full mx-auto px-6 py-8">
           {children}

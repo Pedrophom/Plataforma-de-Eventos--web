@@ -1,14 +1,30 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/src/lib/prisma';
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params;
-    const evento = await prisma.evento.findUnique({ where: { id } });
-    if (!evento) return NextResponse.json({ error: 'Evento não encontrado.' }, { status: 404 });
+    const { id } = await params; // Agora aguardamos os params corretamente
+    
+    const evento = await prisma.evento.findUnique({
+      where: { id },
+      include: {
+        inscricoes: {
+          include: {
+            usuario: true 
+          }
+        }
+      }
+    });
+
+    if (!evento) {
+      return NextResponse.json({ erro: "Evento não encontrado" }, { status: 404 });
+    }
+
     return NextResponse.json(evento);
   } catch (error) {
-    return NextResponse.json({ error: 'Erro ao buscar evento.' }, { status: 500 });
+    return NextResponse.json({ erro: "Erro ao buscar evento" }, { status: 500 });
   }
 }
 
