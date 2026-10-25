@@ -1,37 +1,100 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/src/lib/prisma"; // Ajuste o caminho do prisma se necessário
-import jwt from "jsonwebtoken";
+import {
+  connection,
+  NextResponse,
+  type NextRequest,
+} from "next/server";
+
+import { prisma } from "@/src/lib/prisma";
+import jwt, { type JwtPayload } from "jsonwebtoken";
+
+interface TokenPayload extends JwtPayload {
+  userId?: string;
+  id?: string;
+}
 
 export async function GET(req: NextRequest) {
+  // Impede que o acesso aos dados da requisição
+  // aconteça durante o prerendering.
+  await connection();
+
   try {
-    // 1. Pega o token enviado pelo telemóvel
+    // 1. Obtém o token enviado pelo aplicativo móvel.
     const authHeader = req.headers.get("authorization");
+
     if (!authHeader) {
-      return NextResponse.json({ erro: "Não autorizado" }, { status: 401 });
+      return NextResponse.json(
+        { erro: "Não autorizado" },
+        { status: 401 }
+      );
     }
 
-    const token = authHeader.split(" ")[1];
-    
-    // 2. Descodifica o token para descobrir quem é o utilizador (usa o mesmo secret do login)
-    const secret = process.env.JWT_SECRET || "sua_chave_secreta_aqui";
-    const decoded = jwt.verify(token, secret) as { userId: string }; // ou id, dependendo de como fez no login
+    // Espera o formato: Authorization: Bearer <token>
+    const [scheme, token] = authHeader.split(/\s+/, 2);
 
-    // 3. Procura apenas as inscrições deste utilizador específico
+    if (scheme?.toLowerCase() !== "bearer" || !token) {
+      return NextResponse.json(
+        { erro: "Token ausente ou malformado" },
+        { status: 401 }
+      );
+    }
+
+    // 2. Obtém o segredo configurado no ambiente.
+    const secret = process.env.JWT_SECRET;
+
+    if (!secret) {
+      console.error("A variável de ambiente JWT_SECRET não está configurada.");
+
+      return NextResponse.json(
+        { erro: "Erro de configuração do servidor" },
+        { status: 500 }
+      );
+    }
+
+    // 3. Valida o token e identifica o usuário.
+    let decoded: TokenPayload;
+
+    try {
+      decoded = jwt.verify(token, secret) as TokenPayload;
+    } catch {
+      return NextResponse.json(
+        { erro: "Token inválido ou expirado" },
+        { status: 401 }
+      );
+    }
+
+    const usuarioId = decoded.userId ?? decoded.id;
+
+    if (typeof usuarioId !== "string" || !usuarioId.trim()) {
+      return NextResponse.json(
+        { erro: "Token sem identificador de usuário válido" },
+        { status: 401 }
+      );
+    }
+
+    // 4. Busca somente as inscrições deste usuário.
     const inscricoes = await prisma.inscricao.findMany({
-      where: { 
-        usuarioId: decoded.userId || (decoded as any).id 
+      where: {
+        usuarioId,
       },
       include: {
-        evento: true // Traz os detalhes do evento junto com a inscrição
+        evento: true,
       },
       orderBy: {
-        id: 'desc'
-      }
+        id: "desc",
+      },
     });
 
+    // 5. Retorna as inscrições encontradas.
     return NextResponse.json(inscricoes);
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ erro: "Erro ao buscar as suas inscrições" }, { status: 500 });
+    console.error(
+      "Erro ao buscar as inscrições do usuário:",
+      error
+    );
+
+    return NextResponse.json(
+      { erro: "Erro ao buscar as suas inscrições" },
+      { status: 500 }
+    );
   }
 }
