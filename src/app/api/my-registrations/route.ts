@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma"; // Ajuste o caminho do prisma se necessário
 import jwt from "jsonwebtoken";
 
-export const dynamic = 'force-dynamic';
-
 export async function GET(req: NextRequest) {
   try {
     // 1. Pega o token enviado pelo telemóvel
