@@ -15,12 +15,31 @@ interface Evento {
 export default function Home() {
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [erroApi, setErroApi] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/events")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Falha ao comunicar com o servidor. Verifique o banco de dados.");
+        }
+        return res.json();
+      })
       .then((data) => {
-        setEventos(data);
+        // Proteção essencial: garante que os dados são um Array antes de guardar
+        if (Array.isArray(data)) {
+          setEventos(data);
+        } else {
+          console.error("A API não retornou uma lista válida:", data);
+          setEventos([]);
+        }
+      })
+      .catch((error) => {
+        console.error("Erro na requisição:", error);
+        setErroApi("Não foi possível carregar os eventos. Verifique se o arquivo .env está configurado corretamente com a URL do Supabase.");
+        setEventos([]); // Garante que a variável continua a ser um Array vazio
+      })
+      .finally(() => {
         setCarregando(false);
       });
   }, []);
@@ -58,7 +77,13 @@ export default function Home() {
         </div>
       </div>
 
-      {eventos.length === 0 ? (
+      {/* Exibe o erro na tela sem "quebrar" a aplicação se a API falhar */}
+      {erroApi ? (
+        <div className="bg-red-50 border border-red-200 text-red-600 rounded-xl p-8 text-center shadow-sm">
+          <p className="font-medium text-lg mb-2">Ops! Ocorreu um problema.</p>
+          <p className="text-sm">{erroApi}</p>
+        </div>
+      ) : !Array.isArray(eventos) || eventos.length === 0 ? (
         <div className="bg-white rounded-xl p-12 text-center border border-gray-200 shadow-sm">
           <p className="text-gray-500 text-lg mb-4">Nenhum evento cadastrado no momento.</p>
           <Link 
